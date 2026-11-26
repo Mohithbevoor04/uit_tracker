@@ -15,9 +15,10 @@ import {
   Trash2,
   ExternalLink,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  ArrowRightLeft
 } from 'lucide-react';
-import { useProject } from '../context/ProjectContext';
+import { useProject, convertToEur } from '../context/ProjectContext';
 
 export default function ProjectDefinitionPage() {
   const navigate = useNavigate();
@@ -428,7 +429,15 @@ export default function ProjectDefinitionPage() {
                         {p.projectName}
                       </td>
                       <td className="py-3 px-4 text-slate-600">{p.businessUnit}</td>
-                      <td className="py-3 px-4 text-slate-600">{p.geo}</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                          p.geo?.toUpperCase().includes('UKI') && !p.geo?.toUpperCase().includes('NON')
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}>
+                          {p.geo}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-slate-600 font-medium">{p.partner}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${statusBadge}`}>
@@ -437,12 +446,26 @@ export default function ProjectDefinitionPage() {
                       </td>
                       <td className="py-3 px-4 text-slate-600">{p.projectType}</td>
                       <td className="py-3 px-4 font-mono font-semibold text-slate-800">
-                        {p.currency === 'USD' ? '$' : p.currency === 'GBP' ? '£' : '€'}
-                        {(p.sowValue || 0).toLocaleString()}
+                        <div>
+                          {p.currency === 'USD' ? '$' : p.currency === 'GBP' ? '£' : '€'}
+                          {(p.sowValue || 0).toLocaleString()}
+                        </div>
+                        {p.currency !== 'EUR' && (
+                          <div className="text-[10px] text-purple-700 font-bold">
+                            ≈ €{(p.sowValueEur || Math.round(convertToEur(p.sowValue, p.currency))).toLocaleString()} EUR
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4 font-mono font-semibold text-emerald-700">
-                        {p.currency === 'USD' ? '$' : p.currency === 'GBP' ? '£' : '€'}
-                        {(p.totalCost || 0).toLocaleString()}
+                        <div>
+                          {p.currency === 'USD' ? '$' : p.currency === 'GBP' ? '£' : '€'}
+                          {(p.totalCost || 0).toLocaleString()}
+                        </div>
+                        {p.currency !== 'EUR' && (
+                          <div className="text-[10px] text-emerald-600 font-bold">
+                            ≈ €{(p.totalCostEur || Math.round(convertToEur(p.totalCost, p.currency))).toLocaleString()} EUR
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end space-x-2">

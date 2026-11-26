@@ -3,10 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Save, 
   ArrowLeft, 
-  Sparkles, 
-  CheckCircle2, 
-  Clock, 
-  Building2, 
   Layers, 
   Calendar, 
   DollarSign, 
@@ -28,7 +24,7 @@ export default function AddNewProjectPage() {
   const navigate = useNavigate();
   const { saveProject, formData } = useProject();
 
-  // Active sub-tab state (matching the 6 tabs in Excel Image 3, 1, 2)
+  // Active sub-tab state (Exact 6 tabs from Excel)
   const [activeTab, setActiveTab] = useState('general');
 
   const tabs = [
@@ -41,10 +37,7 @@ export default function AddNewProjectPage() {
   ];
 
   const handleSave = () => {
-    const created = saveProject();
-    if (created) {
-      // Stay on page or allow user to see newly minted ID
-    }
+    saveProject();
   };
 
   return (
@@ -86,7 +79,7 @@ export default function AddNewProjectPage() {
         </div>
       </div>
 
-      {/* Excel Navigation Tabs Ribbon (Exact tabs shown in Image 3, 1, 2) */}
+      {/* Excel Navigation Tabs Ribbon (The 6 original tabs) */}
       <div className="bg-slate-200 p-1 rounded-xl flex items-center space-x-1 overflow-x-auto shadow-inner mb-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -96,7 +89,7 @@ export default function AddNewProjectPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[150px] py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-2 whitespace-nowrap ${
+              className={`flex-1 min-w-[145px] py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap ${
                 isActive
                   ? 'bg-[#6b3074] text-white shadow-md'
                   : 'text-slate-700 hover:bg-slate-300/70 hover:text-slate-900'

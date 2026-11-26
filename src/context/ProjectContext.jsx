@@ -2,6 +2,69 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ProjectContext = createContext(null);
 
+// Exchange rates to EUR base
+export const CURRENCY_RATES_TO_EUR = {
+  EUR: 1.0,
+  GBP: 1.17, // 1 GBP = 1.17 EUR
+  USD: 0.92, // 1 USD = 0.92 EUR
+  CHF: 1.05, // 1 CHF = 1.05 EUR
+  INR: 0.011 // 1 INR = 0.011 EUR
+};
+
+export const convertToEur = (amount, currency = 'EUR') => {
+  const rate = CURRENCY_RATES_TO_EUR[currency] || 1.0;
+  return (Number(amount) || 0) * rate;
+};
+
+// Department Categorization for Roles
+export const getRoleDepartment = (roleName = '') => {
+  const r = roleName.toLowerCase();
+  if (
+    r.includes('project manager') || 
+    r.includes('business analyst') || 
+    r.includes('pm') || 
+    r.includes('ba')
+  ) {
+    return 'CNT';
+  }
+  if (
+    r.includes('ai') || 
+    r.includes('data scientist') || 
+    r.includes('machine learning') ||
+    r.includes('nlp')
+  ) {
+    return 'AI';
+  }
+  // All remaining roles belong to Industrial Automation (IA)
+  return 'Industrial Automation';
+};
+
+// Utility to generate months between two dates
+export const getMonthsBetweenDates = (startDateStr, endDateStr) => {
+  if (!startDateStr || !endDateStr) return ['2026-12', '2027-01', '2027-02', '2027-03', '2027-04'];
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  const months = [];
+  
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
+  const last = new Date(end.getFullYear(), end.getMonth(), 1);
+
+  while (current <= last) {
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, '0');
+    months.push(`${year}-${month}`);
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  return months.length > 0 ? months : ['2026-12', '2027-01', '2027-02', '2027-03', '2027-04'];
+};
+
+export const formatMonthLabel = (monthKey) => {
+  const [year, month] = monthKey.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+};
+
 const INITIAL_PROJECTS = [
   {
     id: 'PRJ-2026-001',
@@ -15,9 +78,20 @@ const INITIAL_PROJECTS = [
     sowStatus: 'Signed',
     currency: 'EUR',
     sowValue: 245000,
+    sowValueEur: 245000,
     totalCost: 218400,
+    totalCostEur: 218400,
+    startDate: '2026-06-01',
+    endDate: '2026-11-30',
     pm: 'Sophie Keller',
     techLead: 'Rahul Sharma',
+    departmentCosts: {
+      cnt: 73500,
+      ai: 56000,
+      ia: 88900
+    },
+    targetFulfillmentPct: 96.5,
+    utilizationPct: 89.2,
     updatedAt: '2026-11-20'
   },
   {
@@ -32,9 +106,20 @@ const INITIAL_PROJECTS = [
     sowStatus: 'Signed',
     currency: 'EUR',
     sowValue: 380000,
+    sowValueEur: 380000,
     totalCost: 310500,
+    totalCostEur: 310500,
+    startDate: '2026-09-01',
+    endDate: '2027-03-31',
     pm: 'Christian Becker',
     techLead: 'Elena Rostova',
+    departmentCosts: {
+      cnt: 94000,
+      ai: 112500,
+      ia: 104000
+    },
+    targetFulfillmentPct: 92.0,
+    utilizationPct: 86.4,
     updatedAt: '2026-11-22'
   },
   {
@@ -49,9 +134,22 @@ const INITIAL_PROJECTS = [
     sowStatus: 'Signed',
     currency: 'GBP',
     sowValue: 420000,
+    // 420,000 GBP * 1.17 = 491,400 EUR
+    sowValueEur: 491400,
     totalCost: 390000,
+    // 390,000 GBP * 1.17 = 456,300 EUR
+    totalCostEur: 456300,
+    startDate: '2026-11-01',
+    endDate: '2027-05-31',
     pm: 'David Chen',
     techLead: 'Ananya Patel',
+    departmentCosts: {
+      cnt: 110000 * 1.17,
+      ai: 210000 * 1.17,
+      ia: 70000 * 1.17
+    },
+    targetFulfillmentPct: 95.0,
+    utilizationPct: 91.8,
     updatedAt: '2026-11-18'
   },
   {
@@ -66,9 +164,20 @@ const INITIAL_PROJECTS = [
     sowStatus: 'In Review',
     currency: 'EUR',
     sowValue: 195000,
+    sowValueEur: 195000,
     totalCost: 172000,
+    totalCostEur: 172000,
+    startDate: '2026-12-01',
+    endDate: '2027-04-30',
     pm: 'Sophie Keller',
     techLead: 'Lucas Muller',
+    departmentCosts: {
+      cnt: 58000,
+      ai: 32000,
+      ia: 82000
+    },
+    targetFulfillmentPct: 88.5,
+    utilizationPct: 84.0,
     updatedAt: '2026-11-15'
   },
   {
@@ -83,9 +192,22 @@ const INITIAL_PROJECTS = [
     sowStatus: 'Signed',
     currency: 'USD',
     sowValue: 510000,
+    // 510,000 USD * 0.92 = 469,200 EUR
+    sowValueEur: 469200,
     totalCost: 480000,
+    // 480,000 USD * 0.92 = 441,600 EUR
+    totalCostEur: 441600,
+    startDate: '2026-04-01',
+    endDate: '2026-10-31',
     pm: 'Alexander Weber',
     techLead: 'David Chen',
+    departmentCosts: {
+      cnt: 130000 * 0.92,
+      ai: 195000 * 0.92,
+      ia: 115000 * 0.92
+    },
+    targetFulfillmentPct: 98.2,
+    utilizationPct: 93.5,
     updatedAt: '2026-11-10'
   }
 ];
@@ -101,10 +223,22 @@ const INITIAL_RATE_TABLE = [
   { id: 8, role: 'Tester', rateCard: 350, durationDays: 60, allocationPct: 100 }
 ];
 
+// Pre-seeded initial month allocations for the 5-month project (Dec 2026 - Apr 2027)
+const INITIAL_MONTHLY_ALLOCATIONS = {
+  1: { '2026-12': 12, '2027-01': 12, '2027-02': 12, '2027-03': 12, '2027-04': 12 }, // 60 days
+  2: { '2026-12': 24, '2027-01': 24, '2027-02': 24, '2027-03': 24, '2027-04': 24 }, // 120 days
+  3: { '2026-12': 18, '2027-01': 18, '2027-02': 18, '2027-03': 18, '2027-04': 18 }, // 90 days
+  4: { '2026-12': 16, '2027-01': 16, '2027-02': 16, '2027-03': 16, '2027-04': 16 }, // 80 days
+  5: { '2026-12': 24, '2027-01': 24, '2027-02': 24, '2027-03': 24, '2027-04': 24 }, // 120 days
+  6: { '2026-12': 20, '2027-01': 20, '2027-02': 20, '2027-03': 20, '2027-04': 20 }, // 100 days
+  7: { '2026-12': 12, '2027-01': 12, '2027-02': 12, '2027-03': 12, '2027-04': 12 }, // 60 days
+  8: { '2026-12': 12, '2027-01': 12, '2027-02': 12, '2027-03': 12, '2027-04': 12 }  // 60 days
+};
+
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState(() => {
     try {
-      const saved = localStorage.getItem('axa_projects');
+      const saved = localStorage.getItem('axa_projects_v2');
       return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
     } catch {
       return INITIAL_PROJECTS;
@@ -115,19 +249,19 @@ export function ProjectProvider({ children }) {
 
   // Form State for "Add New Project"
   const [formData, setFormData] = useState({
-    // General Information
     generalInfo: {
       tribeGeo: 'Non-UKI',
       entity: 'AXA Business Services',
       business: 'CFS',
       description: 'Industrial Automation and Cognitive Processing framework to streamline cross-entity underwriting and claims settlements with SLA tracking.',
       projectType: 'Staff Aug',
+      startDate: '2026-12-01',
+      endDate: '2027-04-30',
       toolStackRPA: 'UiPath',
       toolStackAI: 'Azure AI',
       sowStatus: 'Signed',
       sowLink: 'https://axa365.sharepoint.com/:x:/r/sites/IndustrialAutomation-AXAGBS2/sow_signed_2026.pdf'
     },
-    // Resource Loading
     resourceLoading: {
       tribeLead: 'Marc Dupont',
       projectManager: 'Sophie Keller',
@@ -141,14 +275,12 @@ export function ProjectProvider({ children }) {
       aiDataScientist2: 'Matteo Rossi',
       tester1: 'Camille Laurent',
       tester2: 'Daniel Schmidt',
-      // Project Specs
       psAndC: 'AXA Commercial Operations',
       transformationLead: 'Olivier Renard',
       partnerPM: 'Christian Becker',
       business: 'Claims & Underwriting Tech',
       sowSignAuthority: 'VP Global Technology Delivery'
     },
-    // Project Costing
     projectCosting: {
       currency: 'EUR',
       sowValue: 285000,
@@ -156,9 +288,14 @@ export function ProjectProvider({ children }) {
       infraCost: 14500,
       licenseCost: 22000,
       bauCost: 8500,
-      rateTable: INITIAL_RATE_TABLE
+      rateTable: INITIAL_RATE_TABLE,
+      // Departmental Cost Bifurcation
+      costToCnt: 0,
+      costToAi: 0,
+      costToIa: 0
     },
-    // Project Schedule
+    // Month-by-Month Allocation State
+    monthlyAllocations: INITIAL_MONTHLY_ALLOCATIONS,
     projectSchedule: [
       { id: 1, phase: 'Phase 1: Inception & Architecture Blueprint', startDate: '2026-12-01', endDate: '2026-12-20', status: 'Completed', owner: 'Elena Rostova' },
       { id: 2, phase: 'Phase 2: RPA Bot Core Workflow Build', startDate: '2027-01-05', endDate: '2027-02-28', status: 'In Progress', owner: 'Lucas Muller' },
@@ -166,14 +303,12 @@ export function ProjectProvider({ children }) {
       { id: 4, phase: 'Phase 4: SIT & Business Acceptance (UAT)', startDate: '2027-04-01', endDate: '2027-04-30', status: 'Not Started', owner: 'Camille Laurent' },
       { id: 5, phase: 'Phase 5: Production Deployment & Hypercare', startDate: '2027-05-01', endDate: '2027-05-30', status: 'Not Started', owner: 'Sophie Keller' }
     ],
-    // Project Artifacts
     projectArtifacts: [
       { id: 1, name: 'SOW_IndustrialAutomation_Signed.pdf', type: 'Statement of Work', size: '2.4 MB', uploadedBy: 'Christian Becker', date: '2026-11-15', verified: true },
       { id: 2, name: 'Architecture_Design_Document_v2.docx', type: 'Technical Spec', size: '4.8 MB', uploadedBy: 'Elena Rostova', date: '2026-11-19', verified: true },
       { id: 3, name: 'Rate_Card_Matrix_2026.xlsx', type: 'Financial Agreement', size: '512 KB', uploadedBy: 'Sophie Keller', date: '2026-11-21', verified: true },
       { id: 4, name: 'UAT_Signoff_Criteria.pdf', type: 'Quality Assurance', size: '1.1 MB', uploadedBy: 'Camille Laurent', date: '2026-11-23', verified: false }
     ],
-    // Project Extension
     projectExtension: {
       hasExtension: false,
       extensionReason: 'Additional scope for multilingual NLP parsing (French & German policies)',
@@ -185,18 +320,35 @@ export function ProjectProvider({ children }) {
     }
   });
 
-  // Calculate talent cost automatically from rate table
+  // Automatically calculate Talent Cost and Departmental Costs (CNT, AI, IA)
   useEffect(() => {
-    const calculatedTalent = formData.projectCosting.rateTable.reduce((acc, row) => {
+    let totalTalent = 0;
+    let cntCost = 0;
+    let aiCost = 0;
+    let iaCost = 0;
+
+    formData.projectCosting.rateTable.forEach((row) => {
       const cost = (Number(row.rateCard) || 0) * (Number(row.durationDays) || 0) * ((Number(row.allocationPct) || 100) / 100);
-      return acc + cost;
-    }, 0);
+      totalTalent += cost;
+      
+      const dept = getRoleDepartment(row.role);
+      if (dept === 'CNT') {
+        cntCost += cost;
+      } else if (dept === 'AI') {
+        aiCost += cost;
+      } else {
+        iaCost += cost;
+      }
+    });
 
     setFormData(prev => ({
       ...prev,
       projectCosting: {
         ...prev.projectCosting,
-        talentCost: calculatedTalent
+        talentCost: totalTalent,
+        costToCnt: cntCost,
+        costToAi: aiCost,
+        costToIa: iaCost
       }
     }));
   }, [formData.projectCosting.rateTable]);
@@ -204,7 +356,7 @@ export function ProjectProvider({ children }) {
   // Persist projects to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('axa_projects', JSON.stringify(projects));
+      localStorage.setItem('axa_projects_v2', JSON.stringify(projects));
     } catch (e) {
       console.error('Failed to save projects to localStorage:', e);
     }
@@ -222,16 +374,37 @@ export function ProjectProvider({ children }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Save new project function
+  // Update Month-by-Month Allocation cell
+  const updateMonthlyAllocation = (roleId, monthKey, days) => {
+    setFormData(prev => ({
+      ...prev,
+      monthlyAllocations: {
+        ...prev.monthlyAllocations,
+        [roleId]: {
+          ...(prev.monthlyAllocations[roleId] || {}),
+          [monthKey]: Number(days) || 0
+        }
+      }
+    }));
+  };
+
+  // Save new project function with Currency Conversion & Departmental Segregation
   const saveProject = () => {
     const newIdNum = projects.length + 1;
     const projectCode = `DAAS-IA-${String(newIdNum).padStart(3, '0')}`;
     const projectId = `PRJ-AXA-2026-${String(newIdNum).padStart(3, '0')}`;
+    const curr = formData.projectCosting.currency;
     
-    const totalCost = Number(formData.projectCosting.talentCost) + 
+    const totalCostLocal = Number(formData.projectCosting.talentCost) + 
       Number(formData.projectCosting.infraCost) + 
       Number(formData.projectCosting.licenseCost) + 
       Number(formData.projectCosting.bauCost);
+
+    const sowValueLocal = Number(formData.projectCosting.sowValue) || 0;
+
+    // Converted to EUR Base
+    const sowValueEur = convertToEur(sowValueLocal, curr);
+    const totalCostEur = convertToEur(totalCostLocal, curr);
 
     const newProject = {
       id: projectId,
@@ -243,9 +416,20 @@ export function ProjectProvider({ children }) {
       status: 'Open',
       projectType: formData.generalInfo.projectType,
       sowStatus: formData.generalInfo.sowStatus,
-      currency: formData.projectCosting.currency,
-      sowValue: Number(formData.projectCosting.sowValue) || 0,
-      totalCost,
+      startDate: formData.generalInfo.startDate,
+      endDate: formData.generalInfo.endDate,
+      currency: curr,
+      sowValue: sowValueLocal,
+      sowValueEur: Math.round(sowValueEur),
+      totalCost: totalCostLocal,
+      totalCostEur: Math.round(totalCostEur),
+      departmentCosts: {
+        cnt: Math.round(convertToEur(formData.projectCosting.costToCnt, curr)),
+        ai: Math.round(convertToEur(formData.projectCosting.costToAi, curr)),
+        ia: Math.round(convertToEur(formData.projectCosting.costToIa, curr))
+      },
+      targetFulfillmentPct: 94.0,
+      utilizationPct: 88.5,
       pm: formData.resourceLoading.projectManager || 'Unassigned',
       techLead: formData.resourceLoading.techLead || 'Unassigned',
       updatedAt: new Date().toISOString().slice(0, 10),
@@ -254,8 +438,7 @@ export function ProjectProvider({ children }) {
 
     setProjects(prev => [newProject, ...prev]);
     
-    // Notification as shown in the Excel prompt: "After saving, create a project ID and notify"
-    addToast(`Project successfully created! Assigned Project ID: ${projectId}. Stakeholders & Finance team notified.`, 'success');
+    addToast(`Project created! Assigned ID: ${projectId}. EUR Base SOW: €${Math.round(sowValueEur).toLocaleString()} EUR. Stakeholders & Finance notified.`, 'success');
     return newProject;
   };
 
@@ -336,6 +519,7 @@ export function ProjectProvider({ children }) {
       updateRateTableRow,
       addRateTableRow,
       removeRateTableRow,
+      updateMonthlyAllocation,
       setFormData
     }}>
       {children}

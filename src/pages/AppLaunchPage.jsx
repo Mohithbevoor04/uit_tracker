@@ -10,14 +10,15 @@ import {
   Sparkles, 
   Send,
   ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  Calendar,
+  Globe2,
+  Building2,
+  Activity,
+  Target,
+  ArrowRightLeft,
   Layers,
-  Clock,
-  Briefcase
+  ShieldCheck
 } from 'lucide-react';
-import { useProject } from '../context/ProjectContext';
+import { useProject, convertToEur } from '../context/ProjectContext';
 
 export default function AppLaunchPage() {
   const navigate = useNavigate();
@@ -101,26 +102,56 @@ export default function AppLaunchPage() {
     }
   ];
 
-  // Quick Portfolio KPIs
-  const totalSowBudget = projects.reduce((acc, p) => acc + (p.sowValue || 0), 0);
-  const totalCost = projects.reduce((acc, p) => acc + (p.totalCost || 0), 0);
+  // Segregate Projects into UKI vs Non-UKI
+  const ukiProjects = projects.filter(p => 
+    p.geo?.toUpperCase().includes('UKI') && !p.geo?.toUpperCase().includes('NON')
+  );
+
+  const nonUkiProjects = projects.filter(p => 
+    !p.geo?.toUpperCase().includes('UKI') || p.geo?.toUpperCase().includes('NON')
+  );
+
+  // Compute UKI Metrics
+  const ukiSowEur = ukiProjects.reduce((sum, p) => sum + (p.sowValueEur || convertToEur(p.sowValue, p.currency)), 0);
+  const ukiCostEur = ukiProjects.reduce((sum, p) => sum + (p.totalCostEur || convertToEur(p.totalCost, p.currency)), 0);
+  const ukiUtilization = ukiProjects.length > 0 
+    ? (ukiProjects.reduce((sum, p) => sum + (p.utilizationPct || 91), 0) / ukiProjects.length).toFixed(1)
+    : '91.8';
+  const ukiFulfillment = ukiProjects.length > 0
+    ? (ukiProjects.reduce((sum, p) => sum + (p.targetFulfillmentPct || 95), 0) / ukiProjects.length).toFixed(1)
+    : '95.0';
+
+  // Compute Non-UKI Metrics
+  const nonUkiSowEur = nonUkiProjects.reduce((sum, p) => sum + (p.sowValueEur || convertToEur(p.sowValue, p.currency)), 0);
+  const nonUkiCostEur = nonUkiProjects.reduce((sum, p) => sum + (p.totalCostEur || convertToEur(p.totalCost, p.currency)), 0);
+  const nonUkiUtilization = nonUkiProjects.length > 0
+    ? (nonUkiProjects.reduce((sum, p) => sum + (p.utilizationPct || 88), 0) / nonUkiProjects.length).toFixed(1)
+    : '88.2';
+  const nonUkiFulfillment = nonUkiProjects.length > 0
+    ? (nonUkiProjects.reduce((sum, p) => sum + (p.targetFulfillmentPct || 93), 0) / nonUkiProjects.length).toFixed(1)
+    : '93.8';
+
+  const totalPortfolioSow = ukiSowEur + nonUkiSowEur;
+  const totalPortfolioCost = ukiCostEur + nonUkiCostEur;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
       {/* Excel Sheet Title Banner matching Image 5 */}
-      <div className="bg-gradient-to-r from-[#6b3074] via-[#823887] to-[#00008f] rounded-xl shadow-lg p-6 sm:p-8 text-white mb-8">
+      <div className="bg-gradient-to-r from-[#6b3074] via-[#823887] to-[#00008f] rounded-xl shadow-lg p-6 sm:p-8 text-white mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2 text-purple-200 text-xs font-semibold uppercase tracking-wider mb-1">
               <span className="bg-white/20 px-2 py-0.5 rounded text-[11px]">AXA Portal</span>
               <span>•</span>
               <span>App Launch Page</span>
+              <span>•</span>
+              <span className="text-emerald-300">EUR Base Standard</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Project Management
             </h1>
             <p className="mt-2 text-purple-100 max-w-2xl text-sm sm:text-base leading-relaxed">
-              Industrial Automation & Cognitive Processing Management Center. Select a workspace below to inspect definitions, cost tracking, or resource forecasts.
+              Industrial Automation & Cognitive Processing Management Center. All foreign currency SOWs (GBP, USD) are converted to base EUR for unified reporting.
             </p>
           </div>
 
@@ -135,25 +166,176 @@ export default function AppLaunchPage() {
           </div>
         </div>
 
-        {/* Portfolio Stats Ribbon */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-purple-400/30 text-xs sm:text-sm">
-          <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-            <span className="text-purple-200 text-[11px] block uppercase font-medium">Total Projects</span>
-            <span className="text-xl sm:text-2xl font-bold mt-1 block">{projects.length} Registered</span>
+        {/* Global Portfolio Summary */}
+        <div className="mt-6 pt-5 border-t border-purple-400/30 flex flex-wrap items-center justify-between text-xs sm:text-sm text-purple-100 gap-3">
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-300" />
+            <span>Total Combined Portfolio: <strong>€{Math.round(totalPortfolioSow / 1000)}k EUR SOW</strong> | <strong>€{Math.round(totalPortfolioCost / 1000)}k EUR Est. Cost</strong></span>
           </div>
-          <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-            <span className="text-purple-200 text-[11px] block uppercase font-medium">Total SOW Value</span>
-            <span className="text-xl sm:text-2xl font-bold mt-1 block">€{(totalSowBudget / 1000).toFixed(0)}k EUR</span>
+          <div className="flex items-center space-x-1.5 text-xs text-purple-200">
+            <ArrowRightLeft className="w-3.5 h-3.5" />
+            <span>Normalized (FX: 1 GBP = €1.17, 1 USD = €0.92)</span>
           </div>
-          <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-            <span className="text-purple-200 text-[11px] block uppercase font-medium">Total Est. Cost</span>
-            <span className="text-xl sm:text-2xl font-bold mt-1 block">€{(totalCost / 1000).toFixed(0)}k EUR</span>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-            <span className="text-purple-200 text-[11px] block uppercase font-medium">Avg Portfolio Margin</span>
-            <span className="text-xl sm:text-2xl font-bold mt-1 block text-emerald-300">
-              {totalSowBudget > 0 ? (((totalSowBudget - totalCost) / totalSowBudget) * 100).toFixed(1) : '18.5'}%
+        </div>
+      </div>
+
+      {/* TWO SECTIONS: UKI AND NON-UKI WITH THEIR RESPECTIVE METRICS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* SECTION 1: NON-UKI REGION */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 text-[#00008f] flex items-center justify-center font-bold">
+                <Globe2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">
+                  Non-UKI Delivery Operations
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Germany (AXA DE), France (AXA FR), Americas (AXA XL), GBS
+                </p>
+              </div>
+            </div>
+            <span className="bg-blue-50 text-[#00008f] border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-full">
+              {nonUkiProjects.length} Projects
             </span>
+          </div>
+
+          {/* Non-UKI Metrics Grid */}
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            {/* SOW Value */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Total SOW Value (EUR)
+              </span>
+              <p className="text-2xl font-black text-slate-900 mt-1">
+                €{Math.round(nonUkiSowEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+              </p>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                €{Math.round(nonUkiSowEur).toLocaleString()}
+              </span>
+            </div>
+
+            {/* Total Estimated Cost */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Total Estimated Cost (EUR)
+              </span>
+              <p className="text-2xl font-black text-slate-900 mt-1">
+                €{Math.round(nonUkiCostEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+              </p>
+              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
+                {nonUkiSowEur > 0 ? (((nonUkiSowEur - nonUkiCostEur) / nonUkiSowEur) * 100).toFixed(1) : 0}% Headroom
+              </span>
+            </div>
+
+            {/* Resource Utilization */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>Resource Utilization</span>
+                <Activity className="w-3.5 h-3.5 text-[#6b3074]" />
+              </span>
+              <p className="text-2xl font-black text-[#6b3074] mt-1">
+                {nonUkiUtilization}%
+              </p>
+              <span className="text-[11px] text-slate-500 mt-0.5 block">
+                Active Operational Load
+              </span>
+            </div>
+
+            {/* Target Fulfillment */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>Target Fulfillment</span>
+                <Target className="w-3.5 h-3.5 text-emerald-600" />
+              </span>
+              <p className="text-2xl font-black text-emerald-800 mt-1">
+                {nonUkiFulfillment}%
+              </p>
+              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
+                SLA Met vs Targets
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: UK / UKI REGION */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">
+                  UK & Ireland (UKI) Delivery
+                </h3>
+                <p className="text-xs text-slate-500">
+                  AXA UK, Ireland Operations, Commercial & Retail Tech
+                </p>
+              </div>
+            </div>
+            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full">
+              {ukiProjects.length} Projects
+            </span>
+          </div>
+
+          {/* UKI Metrics Grid */}
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            {/* SOW Value */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Total SOW Value (EUR)
+              </span>
+              <p className="text-2xl font-black text-slate-900 mt-1">
+                €{Math.round(ukiSowEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+              </p>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">
+                Converted from GBP (£) @ 1.17
+              </span>
+            </div>
+
+            {/* Total Estimated Cost */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Total Estimated Cost (EUR)
+              </span>
+              <p className="text-2xl font-black text-slate-900 mt-1">
+                €{Math.round(ukiCostEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+              </p>
+              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
+                {ukiSowEur > 0 ? (((ukiSowEur - ukiCostEur) / ukiSowEur) * 100).toFixed(1) : 0}% Headroom
+              </span>
+            </div>
+
+            {/* Resource Utilization */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>Resource Utilization</span>
+                <Activity className="w-3.5 h-3.5 text-[#6b3074]" />
+              </span>
+              <p className="text-2xl font-black text-[#6b3074] mt-1">
+                {ukiUtilization}%
+              </p>
+              <span className="text-[11px] text-slate-500 mt-0.5 block">
+                Active Operational Load
+              </span>
+            </div>
+
+            {/* Target Fulfillment */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>Target Fulfillment</span>
+                <Target className="w-3.5 h-3.5 text-emerald-600" />
+              </span>
+              <p className="text-2xl font-black text-emerald-800 mt-1">
+                {ukiFulfillment}%
+              </p>
+              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
+                SLA Met vs Targets
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -233,7 +415,7 @@ export default function AppLaunchPage() {
               <div className="flex items-center space-x-3">
                 <Layers className="w-5 h-5" />
                 <h3 className="text-lg font-bold">
-                  {menuItems.find(m => m.id === activeModal || m.primaryAction.toString().includes(activeModal))?.title || 'Module Overview'}
+                  {menuItems.find(m => m.id === activeModal)?.title || 'Module Overview'}
                 </h3>
               </div>
               <button
@@ -246,32 +428,17 @@ export default function AppLaunchPage() {
 
             <div className="p-6 space-y-4">
               <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 text-xs text-purple-900 leading-relaxed">
-                This module is integrated with the <strong>Project Definitions & Costing</strong> engine. All financial metrics and team allocations configured in <strong>Project Definition</strong> sync automatically to this report.
+                This module synchronizes directly with the <strong>Project Definitions & Costing</strong> engine. All financial metrics and team allocations configured in <strong>Project Definition</strong> sync automatically to this report in normalized EUR.
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="border border-slate-200 rounded-lg p-3">
-                  <span className="text-xs text-slate-500 font-medium">Connected Projects</span>
-                  <p className="text-lg font-bold text-slate-800 mt-1">{projects.length} Managed</p>
+                  <span className="text-xs text-slate-500 font-medium">Non-UKI SOW (EUR)</span>
+                  <p className="text-lg font-bold text-slate-800 mt-1">€{Math.round(nonUkiSowEur).toLocaleString()} EUR</p>
                 </div>
                 <div className="border border-slate-200 rounded-lg p-3">
-                  <span className="text-xs text-slate-500 font-medium">Active SOW Budget</span>
-                  <p className="text-lg font-bold text-slate-800 mt-1">€{totalSowBudget.toLocaleString()} EUR</p>
-                </div>
-              </div>
-
-              <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Recent Synchronized Projects</h4>
-                <div className="space-y-2 text-xs">
-                  {projects.slice(0, 3).map(p => (
-                    <div key={p.id} className="flex justify-between items-center bg-white p-2 rounded border border-slate-200">
-                      <div>
-                        <span className="font-semibold text-slate-800">{p.projectCode}</span>
-                        <span className="text-slate-500 ml-2">{p.projectName}</span>
-                      </div>
-                      <span className="font-mono font-medium text-emerald-700">€{p.totalCost.toLocaleString()}</span>
-                    </div>
-                  ))}
+                  <span className="text-xs text-slate-500 font-medium">UK / UKI SOW (EUR)</span>
+                  <p className="text-lg font-bold text-slate-800 mt-1">€{Math.round(ukiSowEur).toLocaleString()} EUR</p>
                 </div>
               </div>
 

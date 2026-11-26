@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProject } from '../../context/ProjectContext';
-import { Save, FileCheck, CheckCircle2, Link2, Sparkles, AlertCircle } from 'lucide-react';
+import { Save, FileCheck, CheckCircle2, Link2, Sparkles, AlertCircle, Calendar } from 'lucide-react';
 
 export default function GeneralInfoTab({ onSave }) {
   const { formData, updateGeneralInfo } = useProject();
@@ -73,7 +73,7 @@ export default function GeneralInfoTab({ onSave }) {
             Description <span className="text-rose-500">*</span>
           </label>
           <textarea
-            rows={4}
+            rows={3}
             value={info.description}
             onChange={(e) => updateGeneralInfo('description', e.target.value)}
             placeholder="Describe project objectives, scope, deliverable milestones, and automation business impact..."
@@ -85,7 +85,36 @@ export default function GeneralInfoTab({ onSave }) {
           </div>
         </div>
 
-        {/* Row 3: Project Type & Tool Stack (RPA & AI) */}
+        {/* Row 3: Project Dates (Start & End Date for Timeline) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center">
+              <Calendar className="w-3.5 h-3.5 mr-1 text-[#00008f]" />
+              <span>Project Start Date <span className="text-rose-500">*</span></span>
+            </label>
+            <input
+              type="date"
+              value={info.startDate}
+              onChange={(e) => updateGeneralInfo('startDate', e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00008f]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center">
+              <Calendar className="w-3.5 h-3.5 mr-1 text-[#00008f]" />
+              <span>Project End Date <span className="text-rose-500">*</span></span>
+            </label>
+            <input
+              type="date"
+              value={info.endDate}
+              onChange={(e) => updateGeneralInfo('endDate', e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00008f]"
+            />
+          </div>
+        </div>
+
+        {/* Row 4: Project Type & Tool Stack (RPA & AI) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-slate-100">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -141,7 +170,7 @@ export default function GeneralInfoTab({ onSave }) {
           </div>
         </div>
 
-        {/* Row 4: SOW Status & SOW Link */}
+        {/* Row 5: SOW Status & SOW Link */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -185,7 +214,7 @@ export default function GeneralInfoTab({ onSave }) {
           </div>
         </div>
 
-        {/* Save & Notification Bar matching Image 3 note: "After saving, create a project ID and notify" */}
+        {/* Save & Notification Bar */}
         <div className="bg-[#f0f9ff] border border-blue-200 rounded-lg p-4 mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#00008f]">
