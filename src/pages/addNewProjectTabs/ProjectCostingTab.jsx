@@ -25,7 +25,8 @@ import {
   Clock,
   Sparkles,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  Receipt
 } from 'lucide-react';
 
 export default function ProjectCostingTab() {
@@ -106,6 +107,7 @@ export default function ProjectCostingTab() {
     });
   };
 
+  // Month totals (Total Days per month)
   const monthTotals = useMemo(() => {
     const totals = {};
     months.forEach((m) => {
@@ -117,8 +119,22 @@ export default function ProjectCostingTab() {
     return totals;
   }, [months, costing.rateTable, monthlyAllocations]);
 
+  // Month Accruals: Rate Card * Number of Days calculated for each month
+  const monthAccruals = useMemo(() => {
+    const accruals = {};
+    months.forEach((m) => {
+      accruals[m] = costing.rateTable.reduce((sum, row) => {
+        const days = Number(monthlyAllocations[row.id]?.[m]) || 0;
+        const rate = Number(row.rateCard) || 0;
+        return sum + (rate * days);
+      }, 0);
+    });
+    return accruals;
+  }, [months, costing.rateTable, monthlyAllocations]);
+
   const totalRequiredDays = costing.rateTable.reduce((sum, r) => sum + (Number(r.durationDays) || 0), 0);
   const totalAllocatedAll = Object.values(monthTotals).reduce((sum, val) => sum + val, 0);
+  const totalAccrualAll = Object.values(monthAccruals).reduce((sum, val) => sum + val, 0);
 
   return (
     <div className="space-y-8">
@@ -129,7 +145,7 @@ export default function ProjectCostingTab() {
           <span>Project Costing & Rate Structure</span>
         </div>
         <span className="text-xs font-normal text-purple-200">
-          Base Currency (EUR Standard) • CNT, AI & Industrial Automation Split
+          Base Currency (EUR Standard) • Cost to IA First • Monthly Accruals
         </span>
       </div>
 
@@ -280,22 +296,43 @@ export default function ProjectCostingTab() {
           </div>
         </div>
 
-        {/* DEPARTMENTAL SEGREGATION RIBBON (Replacing Gross Margin) */}
+        {/* DEPARTMENTAL SEGREGATION RIBBON: COST TO IA FIRST, THEN CNT, THEN AI */}
         <div className="mt-6 pt-5 border-t border-slate-200">
           <div className="flex items-center justify-between mb-3">
             <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center">
               <Layers className="w-4 h-4 mr-1 text-[#00008f]" />
               <span>Departmental Cost Allocation</span>
             </h5>
-            <span className="text-[11px] text-slate-400">Replacing commercial gross margin</span>
+            <span className="text-[11px] text-slate-400">Replaces commercial gross margin</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Cost to CNT Team */}
+            
+            {/* 1. FIRST: Cost to Industrial Automation Team (Blue Box with Solution Architect, Developers & QA) */}
+            <div className="bg-blue-50/70 border border-blue-200 rounded-lg p-3.5 ring-1 ring-blue-300/60 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-[#00008f] uppercase">Cost to IA Team</span>
+                <span className="text-[10px] bg-blue-100 text-[#00008f] font-bold px-2 py-0.5 rounded">
+                  Solution Architect, Developers & QA
+                </span>
+              </div>
+              <p className="text-xl font-extrabold text-blue-950 mt-1">
+                {symbol}{iaCost.toLocaleString()}
+              </p>
+              {isForeignCurrency && (
+                <p className="text-[11px] font-mono text-blue-700 mt-0.5">
+                  ≈ €{Math.round(convertToEur(iaCost, costing.currency)).toLocaleString()} EUR
+                </p>
+              )}
+            </div>
+
+            {/* 2. SECOND: Cost to CNT Team */}
             <div className="bg-emerald-50/70 border border-emerald-200 rounded-lg p-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-emerald-800 uppercase">Cost to CNT Team</span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">PM & BA</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">
+                  PM & BA
+                </span>
               </div>
               <p className="text-xl font-extrabold text-emerald-900 mt-1">
                 {symbol}{cntCost.toLocaleString()}
@@ -307,11 +344,13 @@ export default function ProjectCostingTab() {
               )}
             </div>
 
-            {/* Cost to AI Team */}
+            {/* 3. THIRD: Cost to AI Team */}
             <div className="bg-purple-50/70 border border-purple-200 rounded-lg p-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-[#6b3074] uppercase">Cost to AI Team</span>
-                <span className="text-[10px] bg-purple-100 text-[#6b3074] font-semibold px-2 py-0.5 rounded">AI Eng & Arch</span>
+                <span className="text-[10px] bg-purple-100 text-[#6b3074] font-semibold px-2 py-0.5 rounded">
+                  AI Eng & Arch
+                </span>
               </div>
               <p className="text-xl font-extrabold text-purple-950 mt-1">
                 {symbol}{aiCost.toLocaleString()}
@@ -319,22 +358,6 @@ export default function ProjectCostingTab() {
               {isForeignCurrency && (
                 <p className="text-[11px] font-mono text-purple-700 mt-0.5">
                   ≈ €{Math.round(convertToEur(aiCost, costing.currency)).toLocaleString()} EUR
-                </p>
-              )}
-            </div>
-
-            {/* Cost to Industrial Automation Team */}
-            <div className="bg-blue-50/70 border border-blue-200 rounded-lg p-3.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#00008f] uppercase">Cost to IA Team</span>
-                <span className="text-[10px] bg-blue-100 text-[#00008f] font-semibold px-2 py-0.5 rounded">Developers & QA</span>
-              </div>
-              <p className="text-xl font-extrabold text-blue-950 mt-1">
-                {symbol}{iaCost.toLocaleString()}
-              </p>
-              {isForeignCurrency && (
-                <p className="text-[11px] font-mono text-blue-700 mt-0.5">
-                  ≈ €{Math.round(convertToEur(iaCost, costing.currency)).toLocaleString()} EUR
                 </p>
               )}
             </div>
@@ -476,15 +499,15 @@ export default function ProjectCostingTab() {
         </div>
       </div>
 
-      {/* EMBEDDED BELOW PROJECT COSTING: MONTH-BY-MONTH RESOURCE ALLOCATION TIMELINE */}
+      {/* EMBEDDED BELOW PROJECT COSTING: MONTH-BY-MONTH RESOURCE ALLOCATION & MONTHLY ACCRUAL */}
       <div className="space-y-4 pt-2">
         <div className="bg-[#6b3074] text-white px-5 py-2.5 rounded font-bold text-sm tracking-wide shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <CalendarRange className="w-4 h-4" />
-            <span>Month-by-Month Resource Allocation Timeline</span>
+            <span>Month-by-Month Resource Allocation & Accrual Matrix</span>
           </div>
           <span className="text-xs font-normal text-purple-200">
-            Manual Allocation Grid & Duration Reconciliation
+            Monthly Days Allocation & Accruals (Rate Card × Days)
           </span>
         </div>
 
@@ -534,12 +557,15 @@ export default function ProjectCostingTab() {
           </div>
         </div>
 
-        {/* Dynamic Month-by-Month Allocation Matrix */}
+        {/* Dynamic Month-by-Month Allocation & Accrual Matrix */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Resource Days Loaded by Month
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center">
+                <span>Resource Allocation & Accruals By Month</span>
+                <span className="ml-2 text-[10px] font-bold bg-blue-100 text-[#00008f] px-2 py-0.5 rounded">
+                  Calculated: Rate Card × Monthly Days
+                </span>
               </h4>
               <p className="text-xs text-slate-500">
                 Sum of monthly allocated days must reconcile against the Planned Duration from the rate table above.
@@ -566,8 +592,9 @@ export default function ProjectCostingTab() {
                   <th className="py-3 px-4 min-w-[170px]">Role / Department</th>
                   <th className="py-3 px-3 text-center min-w-[100px]">Planned Days</th>
                   {months.map((m) => (
-                    <th key={m} className="py-3 px-3 text-center min-w-[90px] bg-slate-50 border-x border-slate-200">
-                      {formatMonthLabel(m)}
+                    <th key={m} className="py-3 px-3 text-center min-w-[100px] bg-slate-50 border-x border-slate-200">
+                      <div>{formatMonthLabel(m)}</div>
+                      <div className="text-[10px] text-slate-400 font-normal">Days | Accrual</div>
                     </th>
                   ))}
                   <th className="py-3 px-3 text-center min-w-[100px]">Total Allocated</th>
@@ -595,9 +622,14 @@ export default function ProjectCostingTab() {
                     <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-800">{row.role}</div>
-                        <span className={`inline-block text-[10px] font-bold px-1.5 py-0.2 rounded border mt-0.5 ${deptColor}`}>
-                          {dept}
-                        </span>
+                        <div className="flex items-center space-x-1 mt-0.5">
+                          <span className={`inline-block text-[10px] font-bold px-1.5 py-0.2 rounded border ${deptColor}`}>
+                            {dept}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            @{symbol}{row.rateCard}/d
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3 px-3 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
@@ -605,18 +637,24 @@ export default function ProjectCostingTab() {
                       </td>
 
                       {months.map((m) => {
-                        const val = roleAllocations[m] !== undefined ? roleAllocations[m] : '';
+                        const days = roleAllocations[m] !== undefined ? roleAllocations[m] : '';
+                        const roleMonthAccrual = (Number(row.rateCard) || 0) * (Number(days) || 0);
+
                         return (
                           <td key={m} className="py-2 px-2 text-center border-x border-slate-100">
                             <input
                               type="number"
                               min="0"
                               max="31"
-                              value={val}
+                              value={days}
                               onChange={(e) => updateMonthlyAllocation(row.id, m, e.target.value)}
                               placeholder="0"
                               className="w-16 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs text-center font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00008f] focus:border-[#00008f]"
                             />
+                            {/* Role Monthly Accrual Calculation right there */}
+                            <div className="text-[10px] font-mono font-bold text-emerald-700 mt-1">
+                              {symbol}{roleMonthAccrual.toLocaleString()}
+                            </div>
                           </td>
                         );
                       })}
@@ -659,20 +697,22 @@ export default function ProjectCostingTab() {
                 })}
               </tbody>
 
+              {/* FOOTER ROWS: TOTAL MONTHLY ALLOCATION & TOTAL MONTHLY ACCRUAL */}
               <tfoot>
+                {/* 1. TOTAL MONTHLY ALLOCATION (Replaced Total Monthly Burn) */}
                 <tr className="bg-[#f8fafc] border-t-2 border-slate-300 font-extrabold text-xs">
                   <td className="py-3 px-4 text-slate-800 uppercase tracking-wider">
-                    Total Monthly Burn
+                    TOTAL MONTHLY ALLOCATION
                   </td>
                   <td className="py-3 px-3 text-center font-mono text-slate-700">
                     {totalRequiredDays} d
                   </td>
                   {months.map((m) => (
-                    <td key={m} className="py-3 px-3 text-center font-mono text-emerald-700 border-x border-slate-200">
+                    <td key={m} className="py-3 px-3 text-center font-mono text-blue-800 border-x border-slate-200 font-bold">
                       {monthTotals[m] || 0} d
                     </td>
                   ))}
-                  <td className="py-3 px-3 text-center font-mono text-emerald-800 text-sm">
+                  <td className="py-3 px-3 text-center font-mono text-blue-900 text-sm font-bold">
                     {totalAllocatedAll} d
                   </td>
                   <td colSpan="2" className="py-3 px-4">
@@ -687,6 +727,36 @@ export default function ProjectCostingTab() {
                         {Math.abs(totalRequiredDays - totalAllocatedAll)} Days Variance
                       </span>
                     )}
+                  </td>
+                </tr>
+
+                {/* 2. TOTAL MONTHLY ACCRUAL (Calculated: Rate Card * No. of Days for each month right there) */}
+                <tr className="bg-[#f0fdf4] border-t border-emerald-200 font-extrabold text-xs">
+                  <td className="py-3 px-4 text-emerald-900 uppercase tracking-wider flex items-center">
+                    <Receipt className="w-4 h-4 mr-1.5 text-emerald-700" />
+                    <div>
+                      <span>TOTAL MONTHLY ACCRUAL</span>
+                      <span className="block text-[10px] text-emerald-600 font-normal lowercase">
+                        (rate card × days per month)
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-center font-mono text-emerald-700">
+                    {symbol}{Number(costing.talentCost).toLocaleString()}
+                  </td>
+                  {months.map((m) => (
+                    <td key={m} className="py-3 px-3 text-center font-mono text-emerald-800 border-x border-emerald-100 text-sm font-black">
+                      {symbol}{Math.round(monthAccruals[m] || 0).toLocaleString()}
+                    </td>
+                  ))}
+                  <td className="py-3 px-3 text-center font-mono text-emerald-900 text-sm font-black">
+                    {symbol}{Math.round(totalAccrualAll).toLocaleString()}
+                  </td>
+                  <td colSpan="2" className="py-3 px-4">
+                    <span className="text-emerald-800 font-bold flex items-center">
+                      <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-600" />
+                      Monthly Accruals Synchronized
+                    </span>
                   </td>
                 </tr>
               </tfoot>

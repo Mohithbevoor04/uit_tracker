@@ -35,7 +35,7 @@ export const getRoleDepartment = (roleName = '') => {
   ) {
     return 'AI';
   }
-  // All remaining roles belong to Industrial Automation (IA)
+  // All remaining roles (IA Solution Architect, IA Developer, Tester, etc.) belong to Industrial Automation
   return 'Industrial Automation';
 };
 
@@ -65,15 +65,16 @@ export const formatMonthLabel = (monthKey) => {
   return date.toLocaleString('default', { month: 'short', year: 'numeric' });
 };
 
+// Initial Projects with strict DAAS-IA-UKI and DAAS-IA-NUKI codes & FTE data
 const INITIAL_PROJECTS = [
   {
     id: 'PRJ-2026-001',
-    projectCode: 'DAAS-IA-001',
+    projectCode: 'DAAS-IA-NUKI-001',
     projectName: 'Claims Automation Engine DE',
     businessUnit: 'DAAS-IA',
     geo: 'Non-UKI',
     partner: 'AXA DE',
-    status: 'Closed',
+    status: 'Closed', // Completed
     projectType: 'Staff Aug',
     sowStatus: 'Signed',
     currency: 'EUR',
@@ -85,6 +86,9 @@ const INITIAL_PROJECTS = [
     endDate: '2026-11-30',
     pm: 'Sophie Keller',
     techLead: 'Rahul Sharma',
+    totalFte: 4.5,
+    fteBenefited: 4.5,
+    inflightFte: 0,
     departmentCosts: {
       cnt: 73500,
       ai: 56000,
@@ -96,12 +100,12 @@ const INITIAL_PROJECTS = [
   },
   {
     id: 'PRJ-2026-002',
-    projectCode: 'DAAS-IA-002',
+    projectCode: 'DAAS-IA-NUKI-002',
     projectName: 'Cognitive Document Processing GBS',
     businessUnit: 'DAAS-IA',
     geo: 'Non-UKI',
     partner: 'AXA DE',
-    status: 'In Progress',
+    status: 'In Progress', // Inflight
     projectType: 'Time & Material',
     sowStatus: 'Signed',
     currency: 'EUR',
@@ -113,6 +117,9 @@ const INITIAL_PROJECTS = [
     endDate: '2027-03-31',
     pm: 'Christian Becker',
     techLead: 'Elena Rostova',
+    totalFte: 6.0,
+    fteBenefited: 2.0,
+    inflightFte: 4.0,
     departmentCosts: {
       cnt: 94000,
       ai: 112500,
@@ -124,25 +131,26 @@ const INITIAL_PROJECTS = [
   },
   {
     id: 'PRJ-2026-003',
-    projectCode: 'DAAS-IA-003',
+    projectCode: 'DAAS-IA-UKI-001',
     projectName: 'Fraud Detection AI Pipeline',
     businessUnit: 'DAAS-IA',
     geo: 'UKI',
     partner: 'AXA UK',
-    status: 'Open',
+    status: 'Open', // Inflight
     projectType: 'Fixed Price',
     sowStatus: 'Signed',
     currency: 'GBP',
     sowValue: 420000,
-    // 420,000 GBP * 1.17 = 491,400 EUR
     sowValueEur: 491400,
     totalCost: 390000,
-    // 390,000 GBP * 1.17 = 456,300 EUR
     totalCostEur: 456300,
     startDate: '2026-11-01',
     endDate: '2027-05-31',
     pm: 'David Chen',
     techLead: 'Ananya Patel',
+    totalFte: 5.5,
+    fteBenefited: 1.5,
+    inflightFte: 4.0,
     departmentCosts: {
       cnt: 110000 * 1.17,
       ai: 210000 * 1.17,
@@ -154,12 +162,12 @@ const INITIAL_PROJECTS = [
   },
   {
     id: 'PRJ-2026-004',
-    projectCode: 'DAAS-IA-004',
+    projectCode: 'DAAS-IA-NUKI-003',
     projectName: 'Underwriting RPA Bot Suite',
     businessUnit: 'DAAS-IA',
     geo: 'Non-UKI',
     partner: 'AXA FR',
-    status: 'Open',
+    status: 'Open', // Inflight
     projectType: 'Staff Aug',
     sowStatus: 'In Review',
     currency: 'EUR',
@@ -171,6 +179,9 @@ const INITIAL_PROJECTS = [
     endDate: '2027-04-30',
     pm: 'Sophie Keller',
     techLead: 'Lucas Muller',
+    totalFte: 3.5,
+    fteBenefited: 0.5,
+    inflightFte: 3.0,
     departmentCosts: {
       cnt: 58000,
       ai: 32000,
@@ -182,25 +193,26 @@ const INITIAL_PROJECTS = [
   },
   {
     id: 'PRJ-2026-005',
-    projectCode: 'DAAS-IA-005',
+    projectCode: 'DAAS-IA-NUKI-004',
     projectName: 'Bilingual Policy Bot Assistant',
     businessUnit: 'DAAS-IA',
     geo: 'Americas',
     partner: 'AXA XL',
-    status: 'Closed',
+    status: 'Closed', // Completed
     projectType: 'Milestone',
     sowStatus: 'Signed',
     currency: 'USD',
     sowValue: 510000,
-    // 510,000 USD * 0.92 = 469,200 EUR
     sowValueEur: 469200,
     totalCost: 480000,
-    // 480,000 USD * 0.92 = 441,600 EUR
     totalCostEur: 441600,
     startDate: '2026-04-01',
     endDate: '2026-10-31',
     pm: 'Alexander Weber',
     techLead: 'David Chen',
+    totalFte: 5.0,
+    fteBenefited: 5.0,
+    inflightFte: 0,
     departmentCosts: {
       cnt: 130000 * 0.92,
       ai: 195000 * 0.92,
@@ -238,7 +250,7 @@ const INITIAL_MONTHLY_ALLOCATIONS = {
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState(() => {
     try {
-      const saved = localStorage.getItem('axa_projects_v2');
+      const saved = localStorage.getItem('axa_projects_v3');
       return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
     } catch {
       return INITIAL_PROJECTS;
@@ -260,7 +272,10 @@ export function ProjectProvider({ children }) {
       toolStackRPA: 'UiPath',
       toolStackAI: 'Azure AI',
       sowStatus: 'Signed',
-      sowLink: 'https://axa365.sharepoint.com/:x:/r/sites/IndustrialAutomation-AXAGBS2/sow_signed_2026.pdf'
+      sowLink: 'https://axa365.sharepoint.com/:x:/r/sites/IndustrialAutomation-AXAGBS2/sow_signed_2026.pdf',
+      fteBenefit: 4.5,
+      totalFte: 6.2,
+      inflightFte: 2.2
     },
     resourceLoading: {
       tribeLead: 'Marc Dupont',
@@ -289,7 +304,6 @@ export function ProjectProvider({ children }) {
       licenseCost: 22000,
       bauCost: 8500,
       rateTable: INITIAL_RATE_TABLE,
-      // Departmental Cost Bifurcation
       costToCnt: 0,
       costToAi: 0,
       costToIa: 0
@@ -356,7 +370,7 @@ export function ProjectProvider({ children }) {
   // Persist projects to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('axa_projects_v2', JSON.stringify(projects));
+      localStorage.setItem('axa_projects_v3', JSON.stringify(projects));
     } catch (e) {
       console.error('Failed to save projects to localStorage:', e);
     }
@@ -388,11 +402,20 @@ export function ProjectProvider({ children }) {
     }));
   };
 
-  // Save new project function with Currency Conversion & Departmental Segregation
+  // Save new project function with strict code format (DAAS-IA-UKI / DAAS-IA-NUKI)
   const saveProject = () => {
-    const newIdNum = projects.length + 1;
-    const projectCode = `DAAS-IA-${String(newIdNum).padStart(3, '0')}`;
-    const projectId = `PRJ-AXA-2026-${String(newIdNum).padStart(3, '0')}`;
+    const isUki = formData.generalInfo.tribeGeo?.toUpperCase().includes('UKI') && 
+                  !formData.generalInfo.tribeGeo?.toUpperCase().includes('NON');
+    
+    // Count existing projects in that category to determine sequence
+    const categoryCount = projects.filter(p => {
+      const pUki = p.geo?.toUpperCase().includes('UKI') && !p.geo?.toUpperCase().includes('NON');
+      return isUki ? pUki : !pUki;
+    }).length + 1;
+
+    const prefix = isUki ? 'DAAS-IA-UKI' : 'DAAS-IA-NUKI';
+    const projectCode = `${prefix}-${String(categoryCount).padStart(3, '0')}`;
+    const projectId = `PRJ-AXA-2026-${String(projects.length + 1).padStart(3, '0')}`;
     const curr = formData.projectCosting.currency;
     
     const totalCostLocal = Number(formData.projectCosting.talentCost) + 
@@ -401,8 +424,6 @@ export function ProjectProvider({ children }) {
       Number(formData.projectCosting.bauCost);
 
     const sowValueLocal = Number(formData.projectCosting.sowValue) || 0;
-
-    // Converted to EUR Base
     const sowValueEur = convertToEur(sowValueLocal, curr);
     const totalCostEur = convertToEur(totalCostLocal, curr);
 
@@ -412,8 +433,8 @@ export function ProjectProvider({ children }) {
       projectName: formData.generalInfo.description.slice(0, 45) || `Project ${projectCode}`,
       businessUnit: 'DAAS-IA',
       geo: formData.generalInfo.tribeGeo,
-      partner: formData.resourceLoading.partnerPM ? `AXA (${formData.resourceLoading.partnerPM.split(' ')[0]})` : 'AXA DE',
-      status: 'Open',
+      partner: formData.resourceLoading.partnerPM ? `AXA (${formData.resourceLoading.partnerPM.split(' ')[0]})` : (isUki ? 'AXA UK' : 'AXA DE'),
+      status: 'Open', // Inflight
       projectType: formData.generalInfo.projectType,
       sowStatus: formData.generalInfo.sowStatus,
       startDate: formData.generalInfo.startDate,
@@ -423,6 +444,9 @@ export function ProjectProvider({ children }) {
       sowValueEur: Math.round(sowValueEur),
       totalCost: totalCostLocal,
       totalCostEur: Math.round(totalCostEur),
+      totalFte: Number(formData.generalInfo.totalFte) || 5.0,
+      fteBenefited: Number(formData.generalInfo.fteBenefit) || 0,
+      inflightFte: Number(formData.generalInfo.totalFte) || 5.0,
       departmentCosts: {
         cnt: Math.round(convertToEur(formData.projectCosting.costToCnt, curr)),
         ai: Math.round(convertToEur(formData.projectCosting.costToAi, curr)),
@@ -438,7 +462,7 @@ export function ProjectProvider({ children }) {
 
     setProjects(prev => [newProject, ...prev]);
     
-    addToast(`Project created! Assigned ID: ${projectId}. EUR Base SOW: €${Math.round(sowValueEur).toLocaleString()} EUR. Stakeholders & Finance notified.`, 'success');
+    addToast(`Project created with code ${projectCode}! Assigned ID: ${projectId}. Stakeholders & Finance notified.`, 'success');
     return newProject;
   };
 

@@ -16,7 +16,10 @@ import {
   Target,
   ArrowRightLeft,
   Layers,
-  ShieldCheck
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  Briefcase
 } from 'lucide-react';
 import { useProject, convertToEur } from '../context/ProjectContext';
 
@@ -111,32 +114,28 @@ export default function AppLaunchPage() {
     !p.geo?.toUpperCase().includes('UKI') || p.geo?.toUpperCase().includes('NON')
   );
 
-  // Compute UKI Metrics
-  const ukiSowEur = ukiProjects.reduce((sum, p) => sum + (p.sowValueEur || convertToEur(p.sowValue, p.currency)), 0);
-  const ukiCostEur = ukiProjects.reduce((sum, p) => sum + (p.totalCostEur || convertToEur(p.totalCost, p.currency)), 0);
-  const ukiUtilization = ukiProjects.length > 0 
-    ? (ukiProjects.reduce((sum, p) => sum + (p.utilizationPct || 91), 0) / ukiProjects.length).toFixed(1)
-    : '91.8';
-  const ukiFulfillment = ukiProjects.length > 0
-    ? (ukiProjects.reduce((sum, p) => sum + (p.targetFulfillmentPct || 95), 0) / ukiProjects.length).toFixed(1)
-    : '95.0';
-
   // Compute Non-UKI Metrics
   const nonUkiSowEur = nonUkiProjects.reduce((sum, p) => sum + (p.sowValueEur || convertToEur(p.sowValue, p.currency)), 0);
-  const nonUkiCostEur = nonUkiProjects.reduce((sum, p) => sum + (p.totalCostEur || convertToEur(p.totalCost, p.currency)), 0);
-  const nonUkiUtilization = nonUkiProjects.length > 0
-    ? (nonUkiProjects.reduce((sum, p) => sum + (p.utilizationPct || 88), 0) / nonUkiProjects.length).toFixed(1)
-    : '88.2';
-  const nonUkiFulfillment = nonUkiProjects.length > 0
-    ? (nonUkiProjects.reduce((sum, p) => sum + (p.targetFulfillmentPct || 93), 0) / nonUkiProjects.length).toFixed(1)
-    : '93.8';
+  const nonUkiCompleted = nonUkiProjects.filter(p => p.status === 'Closed' || p.status === 'Completed').length;
+  const nonUkiInflight = nonUkiProjects.filter(p => p.status !== 'Closed' && p.status !== 'Completed').length;
+  const nonUkiTotalFte = nonUkiProjects.reduce((sum, p) => sum + (Number(p.totalFte) || 5.0), 0);
+  const nonUkiFteBenefited = nonUkiProjects.reduce((sum, p) => sum + (Number(p.fteBenefited) !== undefined ? Number(p.fteBenefited) : (p.status === 'Closed' ? Number(p.totalFte) || 4.5 : 1.5)), 0);
+  const nonUkiInflightFte = nonUkiProjects.reduce((sum, p) => sum + (Number(p.inflightFte) !== undefined ? Number(p.inflightFte) : (p.status !== 'Closed' ? Number(p.totalFte) || 4.0 : 0)), 0);
+
+  // Compute UKI Metrics
+  const ukiSowEur = ukiProjects.reduce((sum, p) => sum + (p.sowValueEur || convertToEur(p.sowValue, p.currency)), 0);
+  const ukiCompleted = ukiProjects.filter(p => p.status === 'Closed' || p.status === 'Completed').length;
+  const ukiInflight = ukiProjects.filter(p => p.status !== 'Closed' && p.status !== 'Completed').length;
+  const ukiTotalFte = ukiProjects.reduce((sum, p) => sum + (Number(p.totalFte) || 5.5), 0);
+  const ukiFteBenefited = ukiProjects.reduce((sum, p) => sum + (Number(p.fteBenefited) !== undefined ? Number(p.fteBenefited) : (p.status === 'Closed' ? Number(p.totalFte) || 5.5 : 1.5)), 0);
+  const ukiInflightFte = ukiProjects.reduce((sum, p) => sum + (Number(p.inflightFte) !== undefined ? Number(p.inflightFte) : (p.status !== 'Closed' ? Number(p.totalFte) || 4.0 : 0)), 0);
 
   const totalPortfolioSow = ukiSowEur + nonUkiSowEur;
-  const totalPortfolioCost = ukiCostEur + nonUkiCostEur;
+  const totalPortfolioFte = nonUkiTotalFte + ukiTotalFte;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-      {/* Excel Sheet Title Banner matching Image 5 */}
+      {/* Title Banner */}
       <div className="bg-gradient-to-r from-[#6b3074] via-[#823887] to-[#00008f] rounded-xl shadow-lg p-6 sm:p-8 text-white mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -151,7 +150,7 @@ export default function AppLaunchPage() {
               Project Management
             </h1>
             <p className="mt-2 text-purple-100 max-w-2xl text-sm sm:text-base leading-relaxed">
-              Industrial Automation & Cognitive Processing Management Center. All foreign currency SOWs (GBP, USD) are converted to base EUR for unified reporting.
+              Industrial Automation, CNT & AI Delivery Hub. Operational portfolio metrics segregated across Non-UKI and UKI regions.
             </p>
           </div>
 
@@ -170,7 +169,7 @@ export default function AppLaunchPage() {
         <div className="mt-6 pt-5 border-t border-purple-400/30 flex flex-wrap items-center justify-between text-xs sm:text-sm text-purple-100 gap-3">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            <span>Total Combined Portfolio: <strong>€{Math.round(totalPortfolioSow / 1000)}k EUR SOW</strong> | <strong>€{Math.round(totalPortfolioCost / 1000)}k EUR Est. Cost</strong></span>
+            <span>Total Combined Portfolio: <strong>€{Math.round(totalPortfolioSow / 1000)}k EUR SOW</strong> | <strong>{totalPortfolioFte.toFixed(1)} Total FTE</strong></span>
           </div>
           <div className="flex items-center space-x-1.5 text-xs text-purple-200">
             <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -179,8 +178,9 @@ export default function AppLaunchPage() {
         </div>
       </div>
 
-      {/* TWO SECTIONS: UKI AND NON-UKI WITH THEIR RESPECTIVE METRICS */}
+      {/* TWO SECTIONS: UKI AND NON-UKI (Updated Metrics: SOW, Projects, Total FTE, FTE Benefits / Inflight) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
         {/* SECTION 1: NON-UKI REGION */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -198,13 +198,13 @@ export default function AppLaunchPage() {
               </div>
             </div>
             <span className="bg-blue-50 text-[#00008f] border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-full">
-              {nonUkiProjects.length} Projects
+              Code: DAAS-IA-NUKI
             </span>
           </div>
 
-          {/* Non-UKI Metrics Grid */}
+          {/* Non-UKI Metrics Grid (4 Cards) */}
           <div className="grid grid-cols-2 gap-4 mt-5">
-            {/* SOW Value */}
+            {/* Card 1: Total SOW Value in EUR */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Total SOW Value (EUR)
@@ -217,45 +217,52 @@ export default function AppLaunchPage() {
               </span>
             </div>
 
-            {/* Total Estimated Cost */}
+            {/* Card 2: Projects Total, Completed & Inflight */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                Total Estimated Cost (EUR)
+                Projects - Total
               </span>
               <p className="text-2xl font-black text-slate-900 mt-1">
-                €{Math.round(nonUkiCostEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+                {nonUkiProjects.length} <span className="text-xs font-semibold text-slate-500">Projects</span>
               </p>
-              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
-                {nonUkiSowEur > 0 ? (((nonUkiSowEur - nonUkiCostEur) / nonUkiSowEur) * 100).toFixed(1) : 0}% Headroom
-              </span>
+              <div className="flex items-center space-x-2 mt-1 text-[11px]">
+                <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  {nonUkiCompleted} Completed
+                </span>
+                <span className="text-blue-700 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                  {nonUkiInflight} Inflight
+                </span>
+              </div>
             </div>
 
-            {/* Resource Utilization */}
+            {/* Card 3: Total FTE (Replaced Estimated Cost) */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>Resource Utilization</span>
-                <Activity className="w-3.5 h-3.5 text-[#6b3074]" />
+                <span>Total FTE</span>
+                <Users className="w-3.5 h-3.5 text-[#00008f]" />
               </span>
-              <p className="text-2xl font-black text-[#6b3074] mt-1">
-                {nonUkiUtilization}%
+              <p className="text-2xl font-black text-[#00008f] mt-1">
+                {nonUkiTotalFte.toFixed(1)} <span className="text-xs font-semibold text-slate-500">FTE</span>
               </p>
               <span className="text-[11px] text-slate-500 mt-0.5 block">
-                Active Operational Load
+                Total Allocated Capacity
               </span>
             </div>
 
-            {/* Target Fulfillment */}
+            {/* Card 4: FTE Benefited & Inflight */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>Target Fulfillment</span>
-                <Target className="w-3.5 h-3.5 text-emerald-600" />
+                <span>FTE Benefits & Inflight</span>
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
               </span>
               <p className="text-2xl font-black text-emerald-800 mt-1">
-                {nonUkiFulfillment}%
+                {nonUkiFteBenefited.toFixed(1)} <span className="text-xs font-semibold text-slate-500">Benefited</span>
               </p>
-              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
-                SLA Met vs Targets
-              </span>
+              <div className="flex items-center space-x-1.5 mt-1 text-[11px]">
+                <span className="text-purple-700 font-bold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                  {nonUkiInflightFte.toFixed(1)} FTE Inflight
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -277,13 +284,13 @@ export default function AppLaunchPage() {
               </div>
             </div>
             <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full">
-              {ukiProjects.length} Projects
+              Code: DAAS-IA-UKI
             </span>
           </div>
 
-          {/* UKI Metrics Grid */}
+          {/* UKI Metrics Grid (4 Cards) */}
           <div className="grid grid-cols-2 gap-4 mt-5">
-            {/* SOW Value */}
+            {/* Card 1: Total SOW Value in EUR */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Total SOW Value (EUR)
@@ -296,45 +303,52 @@ export default function AppLaunchPage() {
               </span>
             </div>
 
-            {/* Total Estimated Cost */}
+            {/* Card 2: Projects Total, Completed & Inflight */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                Total Estimated Cost (EUR)
+                Projects - Total
               </span>
               <p className="text-2xl font-black text-slate-900 mt-1">
-                €{Math.round(ukiCostEur / 1000)}k <span className="text-xs font-semibold text-slate-500">EUR</span>
+                {ukiProjects.length} <span className="text-xs font-semibold text-slate-500">Projects</span>
               </p>
-              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
-                {ukiSowEur > 0 ? (((ukiSowEur - ukiCostEur) / ukiSowEur) * 100).toFixed(1) : 0}% Headroom
-              </span>
+              <div className="flex items-center space-x-2 mt-1 text-[11px]">
+                <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  {ukiCompleted} Completed
+                </span>
+                <span className="text-blue-700 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                  {ukiInflight} Inflight
+                </span>
+              </div>
             </div>
 
-            {/* Resource Utilization */}
+            {/* Card 3: Total FTE (Replaced Estimated Cost) */}
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>Resource Utilization</span>
-                <Activity className="w-3.5 h-3.5 text-[#6b3074]" />
-              </span>
-              <p className="text-2xl font-black text-[#6b3074] mt-1">
-                {ukiUtilization}%
-              </p>
-              <span className="text-[11px] text-slate-500 mt-0.5 block">
-                Active Operational Load
-              </span>
-            </div>
-
-            {/* Target Fulfillment */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>Target Fulfillment</span>
-                <Target className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Total FTE</span>
+                <Users className="w-3.5 h-3.5 text-emerald-700" />
               </span>
               <p className="text-2xl font-black text-emerald-800 mt-1">
-                {ukiFulfillment}%
+                {ukiTotalFte.toFixed(1)} <span className="text-xs font-semibold text-slate-500">FTE</span>
               </p>
-              <span className="text-[11px] text-emerald-700 font-semibold mt-0.5 block">
-                SLA Met vs Targets
+              <span className="text-[11px] text-slate-500 mt-0.5 block">
+                Total Allocated Capacity
               </span>
+            </div>
+
+            {/* Card 4: FTE Benefited & Inflight */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span>FTE Benefits & Inflight</span>
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+              </span>
+              <p className="text-2xl font-black text-emerald-800 mt-1">
+                {ukiFteBenefited.toFixed(1)} <span className="text-xs font-semibold text-slate-500">Benefited</span>
+              </p>
+              <div className="flex items-center space-x-1.5 mt-1 text-[11px]">
+                <span className="text-purple-700 font-bold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                  {ukiInflightFte.toFixed(1)} FTE Inflight
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -415,7 +429,7 @@ export default function AppLaunchPage() {
               <div className="flex items-center space-x-3">
                 <Layers className="w-5 h-5" />
                 <h3 className="text-lg font-bold">
-                  {menuItems.find(m => m.id === activeModal)?.title || 'Module Overview'}
+                  {menuItems.find(m => m.id === activeModal || m.primaryAction.toString().includes(activeModal))?.title || 'Module Overview'}
                 </h3>
               </div>
               <button

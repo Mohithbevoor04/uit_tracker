@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProject } from '../../context/ProjectContext';
-import { Save, FileCheck, CheckCircle2, Link2, Sparkles, AlertCircle, Calendar } from 'lucide-react';
+import { Save, FileCheck, CheckCircle2, Link2, Sparkles, AlertCircle, Calendar, TrendingUp } from 'lucide-react';
 
 export default function GeneralInfoTab({ onSave }) {
   const { formData, updateGeneralInfo } = useProject();
@@ -26,12 +26,15 @@ export default function GeneralInfoTab({ onSave }) {
               onChange={(e) => updateGeneralInfo('tribeGeo', e.target.value)}
               className="w-full bg-[#e8f0fe] border border-blue-200 rounded px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00008f]"
             >
-              <option value="Non-UKI">Non-UKI</option>
-              <option value="UKI">UKI (United Kingdom & Ireland)</option>
+              <option value="Non-UKI">Non-UKI (Generates DAAS-IA-NUKI Code)</option>
+              <option value="UKI">UKI (Generates DAAS-IA-UKI Code)</option>
               <option value="Americas">Americas (AXA XL)</option>
               <option value="APAC">APAC (Asia-Pacific)</option>
               <option value="Global">Global Operations</option>
             </select>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Prefix: {info.tribeGeo?.toUpperCase().includes('UKI') && !info.tribeGeo?.toUpperCase().includes('NON') ? 'DAAS-IA-UKI-xxx' : 'DAAS-IA-NUKI-xxx'}
+            </span>
           </div>
 
           <div>
@@ -170,8 +173,29 @@ export default function GeneralInfoTab({ onSave }) {
           </div>
         </div>
 
-        {/* Row 5: SOW Status & SOW Link */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-100">
+        {/* Row 5: FTE Benefits, SOW Status & SOW Link */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-slate-100">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center">
+              <TrendingUp className="w-3.5 h-3.5 mr-1 text-[#00008f]" />
+              <span>FTE Benefits <span className="text-rose-500">*</span></span>
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                step="0.1"
+                value={info.fteBenefit !== undefined ? info.fteBenefit : ''}
+                onChange={(e) => updateGeneralInfo('fteBenefit', e.target.value)}
+                placeholder="e.g. 4.5"
+                className="w-full bg-[#e8f0fe] border border-blue-200 rounded px-3 py-2 text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#00008f]"
+              />
+              <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold text-slate-500">
+                FTE
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 mt-1 block">Expected / realized operational capacity benefit</span>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               SOW Status <span className="text-rose-500">*</span>
@@ -179,7 +203,7 @@ export default function GeneralInfoTab({ onSave }) {
             <select
               value={info.sowStatus}
               onChange={(e) => updateGeneralInfo('sowStatus', e.target.value)}
-              className="w-full bg-[#e8f0fe] border border-blue-200 rounded px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00008f]"
+              className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#00008f]"
             >
               <option value="Signed">Signed</option>
               <option value="In Review">In Review</option>
@@ -222,10 +246,10 @@ export default function GeneralInfoTab({ onSave }) {
             </div>
             <div>
               <p className="text-xs font-bold text-slate-800">
-                Automatic Project Provisioning
+                Automatic Project Code & ID Generation
               </p>
               <p className="text-xs text-slate-500 font-medium">
-                After saving, create a project ID and notify project team & finance controllers.
+                Saves project with format <strong>{info.tribeGeo?.toUpperCase().includes('UKI') && !info.tribeGeo?.toUpperCase().includes('NON') ? 'DAAS-IA-UKI-xxx' : 'DAAS-IA-NUKI-xxx'}</strong> and notifies stakeholders.
               </p>
             </div>
           </div>
